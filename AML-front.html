@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>기계학습심화</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background-color: black;
+      }
+
+      #header {
+        position: fixed;
+        top: 12%;
+        left: 50%;
+        z-index: 999;
+        color: white;
+        text-align: center;
+        transform: translate(-50%, -50%);
+      }
+
+      #header > p {
+        font-size: 0.9em;
+      }
+
+      #camera,
+      #camera--view,
+      #camera--sensor,
+      #camera--output {
+        position: fixed;
+        top: 50%;
+        left: 5%;
+        margin-top: -170px;
+        height: 50%;
+        width: 45%;
+        object-fit: cover;
+      }
+
+      #camera--view,
+      #camera--sensor,
+      #camera--output {
+        transform: scaleX(-1);
+        filter: FlipH;
+      }
+
+      #camera--trigger {
+        width: 180px;
+        color: white;
+        background-color: #212121;
+        font-size: 16px;
+        border-radius: 30px;
+        border: none;
+        padding: 15px 20px;
+        text-align: center;
+        box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0, 0.2);
+        position: fixed;
+        bottom: 50px;
+        left: calc(50% - 90px);
+      }
+
+      .taken {
+        height: 140px !important;
+        width: 220px !important;
+        border: solid 1px #212121;
+      }
+
+      table {
+        width: 100%;
+        border: 1px solid #212121;
+        /* background-color: #ffffde; */
+        background-color: #f6f6f6;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #212121;
+        padding: 8px;
+      }
+
+      #result-area {
+        position: fixed;
+        top: 50%;
+        left: 55%;
+        right: 5%;
+        transform: translate(0, -50%);
+        padding: 7px;
+        text-align: center;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header">
+      <h2>표정을 감지해 음악을 추천합니다.</h2>
+      <p>버튼을 클릭 하세요.</p>
+    </div>
+
+    <!-- main 태그는 문서의 주요 내용을 담는 태그. 한 문서에 한개 존재 해야 함.
+        article, aside, header, nav, footer등 요소의 하위에 사용 불가.
+    -->
+    <main id="camera">
+      <canvas id="camera--sensor"></canvas>
+
+      <!-- 기기의 카메라에 접근하여 영상을 페이지에 재생 -->
+      <video id="camera--view" autoplay playsinline></video>
+
+      <img src="//:0" alt="" style="display: none" id="camera--output" />
+
+      <button id="camera--trigger">음악 추천</button>
+    </main>
+
+    <!--음악 목록 출력-->
+    <div id="result-area"></div>
+
+    <script>
+      let constraints = { video: { facingMode: "user" }, audio: false };
+      const cameraView = document.querySelector("#camera--view");
+      const cameraOutput = document.querySelector("#camera--output");
+      const cameraSensor = document.querySelector("#camera--sensor");
+      const cameraTrigger = document.querySelector("#camera--trigger");
+      const resultArea = document.getElementById("result-area");
+
+      function cameraStart() {
+        navigator.mediaDevices
+          .getUserMedia(constraints)
+          .then(function (stream) {
+            track = stream.getTracks()[0];
+            cameraView.srcObject = stream;
+          })
+          .catch(function (error) {
+            console.error("카메라에 문제가 있습니다.", error);
+          });
+      }
+
+      // 페이지가 로드 시 함수 실행
+      window.addEventListener("load", cameraStart, false);
+
+      //촬영 버튼 클릭 시
+      cameraTrigger.addEventListener("click", function () {
+        // 캡쳐
+        cameraSensor.width = cameraView.videoWidth; // 640
+        cameraSensor.height = cameraView.videoHeight;
+        cameraSensor.getContext("2d").drawImage(cameraView, 0, 0);
+        cameraOutput.style.display = "inline";
+        cameraOutput.src = cameraSensor.toDataURL("image/webp");
+        cameraOutput.classList.add("taken");
+        console.log(cameraSensor.height);
+
+        // 테이블 생성
+        resultArea.innerHTML = "";
+
+        var table = document.createElement("table");
+        resultArea.appendChild(table);
+
+        // table header row
+        var rowHeader = document.createElement("tr");
+        table.appendChild(rowHeader);
+
+        var headerNames = ["Name", "Album", "Artist"];
+        headerNames.forEach(function (name) {
+          var headerCell = document.createElement("td");
+          headerCell.textContent = name;
+          rowHeader.appendChild(headerCell);
+        });
+
+        var data = [
+          {
+            Name: "제목1",
+            Album: "앨범1",
+            Artist: "가수1",
+          },
+          {
+            Name: "제목2",
+            Album: "앨범2",
+            Artist: "가수2",
+          },
+          {
+            Name: "제목3",
+            Album: "앨범3",
+            Artist: "가수3",
+          },
+        ]; // data에 추천 음악 리스트가 들어올 예정
+
+        // data 리스트 출력
+        data.forEach(function (value) {
+          var row = document.createElement("tr");
+          table.appendChild(row);
+
+          var cellNames = ["Name", "Album", "Artist"];
+          cellNames.forEach(function (cellName) {
+            var cell = document.createElement("td");
+            cell.textContent = value[cellName];
+            row.appendChild(cell);
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
